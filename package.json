@@ -1,0 +1,16 @@
+{
+  "name": "message-sender",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc --build",
+    "watch": "tsc --watch",
+    "clean": "tsc --build --clean"
+  },
+  "devDependencies": {
+    "serverless": "^2.31.0",
+    "serverless-apigateway-service-proxy": "1.14.0",
+    "serverless-pseudo-parameters": "2.5.0"
+  }
+}

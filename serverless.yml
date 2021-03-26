@@ -1,0 +1,92 @@
+service: message-sender
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  stage: production
+  region: eu-west-1
+
+# you can add packaging information here
+package:
+  include:
+  exclude:
+    - node_modules
+
+functions:
+  hello:
+    handler: handler.sendMessage
+
+custom:
+  apiGatewayServiceProxies:
+    - sns:
+        path: /send-message
+        method: post
+        topicName: { "Fn::GetAtt": ["CaptureSNSTopic", "TopicName"] }
+        cors: true
+        response:
+          - statusCode: 200
+            responseParameters: {}
+            responseTemplates:
+              application/json: |-
+                { "message": "accepted" }
+
+resources:
+  Resources:
+    CaptureSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: "capture-sns-topic"
+
+    SendSNSTopic:
+      Type: AWS::SNS::Topic
+      Properties:
+        TopicName: "send-sns-topic"
+
+    MessageQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: message-queue
+        ReceiveMessageWaitTimeSeconds: 20
+        VisibilityTimeout: 180
+        RedrivePolicy:
+          {
+            "deadLetterTargetArn":
+              { "Fn::GetAtt": ["DeadMessageQueue", "Arn"] },
+            "maxReceiveCount": 3,
+          }
+
+    DeadMessageQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: dead-message-queue
+        VisibilityTimeout: 180
+        MessageRetentionPeriod: 1209600
+
+    snsToMessageQueuePolicy:
+      Type: AWS::SQS::QueuePolicy
+      Properties:
+        PolicyDocument:
+          Version: "2012-10-17"
+          Statement:
+            - Sid: "allow-sns-messages"
+              Effect: Allow
+              Principal: "*"
+              Resource: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
+              Action: "SQS:SendMessage"
+              Condition:
+                ArnEquals:
+                  "aws:SourceArn": Ref CaptureSNSTopic
+        Queues:
+          - Ref: MessageQueue
+
+    MessageQueueSubscription:
+      Type: "AWS::SNS::Subscription"
+      Properties:
+        TopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:capture-sns-topic"
+        Endpoint: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
+        Protocol: sqs
+        RawMessageDelivery: "true"
+
+plugins:
+  - serverless-apigateway-service-proxy
+  - serverless-pseudo-parameters
