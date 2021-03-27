@@ -25,7 +25,7 @@ package:
 functions:
   send-message:
     description: >-
-      Reads a message from an SQS Queue (MessageQueue), pushes the message onto an SNS Topic (SendSNSTopic)
+      Reads a message from an SQS Queue (MessageQueue), publishes the message to the provided phone number
     handler: ./dist/handler.default
     async: true
     events:
@@ -63,11 +63,6 @@ resources:
       Type: AWS::SNS::Topic
       Properties:
         TopicName: "capture-sns-topic"
-
-    SendSNSTopic:
-      Type: AWS::SNS::Topic
-      Properties:
-        TopicName: "send-sns-topic"
 
     MessageQueue:
       Type: AWS::SQS::Queue
@@ -109,14 +104,6 @@ resources:
           - Ref: MessageQueue
 
     MessageQueueSubscription:
-      Type: "AWS::SNS::Subscription"
-      Properties:
-        TopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:capture-sns-topic"
-        Endpoint: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
-        Protocol: sqs
-        RawMessageDelivery: "true"
-
-    phoneNumberSubscription:
       Type: "AWS::SNS::Subscription"
       Properties:
         TopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:capture-sns-topic"
