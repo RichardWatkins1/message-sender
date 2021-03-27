@@ -13,13 +13,24 @@ package:
     - node_modules
 
 functions:
-  hello:
+  send-message:
+    description: >-
+      Reads a message from an SQS Queue (MessageQueue), pushes the message onto an SNS Topic (SendSNSTopic)
     handler: handler.sendMessage
+    events:
+      - sqs:
+          arn: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
+          enabled: true
+          batchSize: 1
+      - sqs:
+          arn: { "Fn::GetAtt": ["DeadMessageQueue", "Arn"] }
+          enabled: false
+          batchSize: 1
 
 custom:
   apiGatewayServiceProxies:
     - sns:
-        path: /send-message
+        path: /sns
         method: post
         topicName: { "Fn::GetAtt": ["CaptureSNSTopic", "TopicName"] }
         cors: true
@@ -72,10 +83,12 @@ resources:
               Effect: Allow
               Principal: "*"
               Resource: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
-              Action: "SQS:SendMessage"
+              Action:
+                - "SQS:SendMessage"
+                - "SQS:ReceiveMessage"
               Condition:
                 ArnEquals:
-                  "aws:SourceArn": Ref CaptureSNSTopic
+                  "aws:SourceArn": !Ref CaptureSNSTopic
         Queues:
           - Ref: MessageQueue
 
