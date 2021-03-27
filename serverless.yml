@@ -5,6 +5,16 @@ provider:
   runtime: nodejs14.x
   stage: production
   region: eu-west-1
+  iam:
+    role:
+      statements:
+        - Effect: "Allow"
+          Action:
+            - "sqs:ReceiveMessage"
+            - "SNS:Publish"
+            - "cloudwatch:PutMetricData"
+          Resource:
+            - "*"
 
 # you can add packaging information here
 package:
@@ -16,7 +26,8 @@ functions:
   send-message:
     description: >-
       Reads a message from an SQS Queue (MessageQueue), pushes the message onto an SNS Topic (SendSNSTopic)
-    handler: handler.sendMessage
+    handler: ./dist/handler.default
+    async: true
     events:
       - sqs:
           arn: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
@@ -33,13 +44,18 @@ custom:
         path: /sns
         method: post
         topicName: { "Fn::GetAtt": ["CaptureSNSTopic", "TopicName"] }
-        cors: true
+        # cors: true
         response:
-          - statusCode: 200
-            responseParameters: {}
-            responseTemplates:
-              application/json: |-
-                { "message": "accepted" }
+          template:
+            # `success` is used when the integration response is 200
+            success: |-
+              { "message: "accepted" }
+            # `clientError` is used when the integration response is 400
+            clientError: |-
+              { "message": "there is an error in your request" }
+            # `serverError` is used when the integration response is 500
+            serverError: |-
+              { "message": "there was an error handling your request" }
 
 resources:
   Resources:
@@ -93,6 +109,14 @@ resources:
           - Ref: MessageQueue
 
     MessageQueueSubscription:
+      Type: "AWS::SNS::Subscription"
+      Properties:
+        TopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:capture-sns-topic"
+        Endpoint: { "Fn::GetAtt": ["MessageQueue", "Arn"] }
+        Protocol: sqs
+        RawMessageDelivery: "true"
+
+    phoneNumberSubscription:
       Type: "AWS::SNS::Subscription"
       Properties:
         TopicArn: "arn:aws:sns:${self:provider.region}:#{AWS::AccountId}:capture-sns-topic"
