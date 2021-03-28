@@ -38,6 +38,9 @@ const buildEvent = (records = Records): SQSEvent => {
   }
 }
 
+// silence console logs
+console.log = () => { }
+
 describe('sendMessage', () => {
   describe('with a valid payload', () => {
     afterEach(() => {

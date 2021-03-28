@@ -1,6 +1,6 @@
 ### Message Sender
 
-Send a post request to `https://awvmj0z5d9.execute-api.eu-west-1.amazonaws.com/production/sns` with the body;
+Send a post request to `https://awvmj0z5d9.execute-api.eu-west-1.amazonaws.com/production/send-message` with the body and you'll receive a text message;
 
 ```json
 {
@@ -14,7 +14,6 @@ Send a post request to `https://awvmj0z5d9.execute-api.eu-west-1.amazonaws.com/p
 ## Running Specs
 
 ```
-yarn build
 yarn test
 ```
 

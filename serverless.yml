@@ -40,7 +40,7 @@ functions:
 custom:
   apiGatewayServiceProxies:
     - sns:
-        path: /sns
+        path: /send-message
         method: post
         topicName: { "Fn::GetAtt": ["CaptureSNSTopic", "TopicName"] }
         # cors: true
