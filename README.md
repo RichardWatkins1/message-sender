@@ -33,5 +33,5 @@ yarn sls deploy
 5. Use serverless-domain-manager for custom domain names.
 6. Use serverless-jetpack for faster packaging.
 7. Add serverless-sqs-alarms-plugin and serverless-plugin-aws-alerts for raising cloudwatch alarms based on function errors or SQS queue lengths.
-9. Optimise the cost of the lambda by reducing allocated memory.
-10. Use serverless-bundle to package lambda functions.
+8. Optimise the cost of the lambda by reducing memory.
+9.  Use serverless-bundle to package lambda functions.
