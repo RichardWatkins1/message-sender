@@ -18,14 +18,13 @@ provider:
 
 # you can add packaging information here
 package:
-  include:
   exclude:
     - node_modules
 
 functions:
   send-message:
     description: >-
-      Reads a message from an SQS Queue (MessageQueue), publishes the message to the provided phone number
+      Reads a message from an SQS Queue (MessageQueue), publishes the message to the provided phone number.
     handler: ./dist/handler.default
     async: true
     events:
